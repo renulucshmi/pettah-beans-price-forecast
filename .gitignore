@@ -1,0 +1,17 @@
+# Temporary files made by Jupyter and Python
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
+
+# Virtual environments
+.venv/
+venv/
+
+# Extra datasets not used in this project
+dataset/srilanka_tourist_arrivals_monthly.csv
+dataset/vegetables_srilanka.csv
+
+# Editor and system files
+.vscode/
+.DS_Store
+Thumbs.db
