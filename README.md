@@ -10,6 +10,4 @@ Central Bank of Sri Lanka, Daily Price Report, via Macro Lab (macrolab.lk). Dail
 ## Status
 Work in progress.
 
-## AI tools used
-- Claude (Anthropic): data loading and cleaning code, project setup (.gitignore, README).
-# pettah-beans-price-forecast
+
