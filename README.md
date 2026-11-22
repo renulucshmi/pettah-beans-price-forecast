@@ -19,7 +19,7 @@ The wholesale price of beans at Pettah swings sharply from week to week (weekly 
 
 | Data | Source | File |
 |---|---|---|
-| Daily wholesale food prices, Aug 2016 to Nov 2026 (Pettah beans, Dambulla beans, Pettah carrot, Pettah cabbage) | **Central Bank of Sri Lanka, Daily Price Report**, compiled by Macro Lab: https://macrolab.lk/data/prices-and-inflation/daily-prices/ | `dataset/daily-prices-d.csv` |
+| Daily wholesale food prices, Aug 2016 to Nov 2026 (Pettah beans, Dambulla beans, Pettah carrot, Pettah cabbage) | **Central Bank of Sri Lanka, Daily Price Report**, compiled by Macro Lab: https://macrolab.lk/data/prices-and-inflation/daily-prices/ (Pettah wholesale beans series: [LK.CPI.DAILY_PRICE.PETTAH_WHOLESALE_BEANS.D](https://macrolab.lk/data/prices-and-inflation/daily-prices/?s=LK.CPI.DAILY_PRICE.PETTAH_WHOLESALE_BEANS.D)) | `dataset/daily-prices-d.csv` |
 | Daily rainfall for Nuwara Eliya (6.95° N, 80.79° E) and Badulla (6.99° N, 81.06° E) | **Open-Meteo Historical Weather API** (ERA5 reanalysis): https://open-meteo.com/ (downloaded by the notebook in Step 2) | `dataset/rain_daily.csv` |
 
 The daily prices are averaged into **537 weeks** (weeks ending on Friday). 10 weeks with no reported trading days (1.9%) were filled by time interpolation and flagged in the `was_missing` column. Nine are in 2020 (training); one, 17 April 2026, is in the test period and affects 6 of the 97 test predictions (its own price and the lag features of the next five weeks). Leaving those 6 weeks out changes each model's test RMSE by about Rs 1 and does not change the ranking. The filled values use the price of the week after each gap, so this is not completely free of leakage; this is documented as a limitation, not resolved.
@@ -182,20 +182,21 @@ The app only needs `app.py`, `pipeline.py`, `model/hybrid_rf_arima.joblib`, `dat
                                 and the test-period predictions (test_predictions.csv)
 ```
 
-## AI tools used
+## Declaration of AI Assistance
 
-**Tool:** Claude (Anthropic), used through the Claude app, throughout this project.
+**Claude** (developed by Anthropic and accessed through the Claude app) was used as an AI assistant to support the development, implementation, and documentation of this project.
 
-**What Claude did:**
-- **Dataset search:** searched for Sri Lankan datasets suitable for the assignment and made a ranked comparison; I chose the CBSL / Macro Lab daily price data from that list.
-- **Code:** wrote most of the Python code in the notebook (Steps 1-11), `pipeline.py` and `app.py`, and test-ran the notebook and the app to find errors before I ran them.
-- **Explanations:** wrote the markdown explanations in the notebook, including the "why" for each choice and the "What this shows" notes, which were written from the outputs of my own runs.
-- **Debugging:** helped fix problems on my laptop, for example the LightGBM kernel crash, the exact collinearity that broke linear regression (solved by leaving the duplicated feature `gap_ma4` out of that model), and the Streamlit / numpy version conflict.
-- **Documentation:** drafted this README.
+**How AI was used**
 
-**What I did:**
-- Chose the problem, the dataset and the target from the options Claude found.
-- Ran every step of the notebook and the app on my own laptop, checked the outputs and charts, and asked for changes where something was wrong or unclear.
-- Committed each step to this GitHub repository.
+- **Notebook (`ensemble_assignment.ipynb`):** Assisted with drafting, refining, and explaining Python code and Markdown across Steps 1–11, including ensemble learning models, visualisations, and model comparisons. AI assistance included substantial code drafting.
+- **Dashboard (`app.py`) and pipeline (`pipeline.py`):** Supported the development of the Streamlit dashboard and forecasting pipeline.
+- **Debugging and validation:** Helped troubleshoot implementation issues, verify outputs, and review methodological aspects, including data leakage and model evaluation.
+- **Documentation:** Assisted in preparing and improving the notebook explanations and README.
 
-All numbers, charts and results in the notebook and this README come from my own runs of the code.
+**My contribution and responsibility**
+
+- I selected the project topic, dataset, and prediction target, and determined the overall scope and direction of the assignment.
+- I guided the implementation and requested modifications to ensure alignment with the Machine Learning lectures and assignment requirements.
+- I reviewed the AI-assisted work, executed the notebook and dashboard on my own laptop, examined the outputs, and requested corrections where necessary.
+- I evaluated model performance, interpreted the findings, and reviewed the documented limitations.
+- All reported results, tables, and visualisations were obtained by executing the code on the project dataset. I take responsibility for the final implementation, results, interpretations, and limitations.
