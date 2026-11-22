@@ -35,14 +35,14 @@ All models are trained on **Sep 2016 to Dec 2023** (383 weeks), tuned on **2024*
 | 1 | Load the Macro Lab file, choose the columns, average into weeks, fill and flag missing weeks, data checks (duplicates, impossible prices, week spacing) |
 | 2 | Download rainfall for the growing areas and check how rain lines up with price changes |
 | 3 | Build the target and the 20 features, with automatic checks against data leakage |
-| 4 | Baselines: naive "no change", seasonal naive, Ridge linear regression, a single decision tree |
+| 4 | Baselines: naive "no change", seasonal naive, multiple linear regression, a single decision tree |
 | 5 | Bagging: BaggingRegressor and Random Forest with out-of-bag (OOB) scores and feature importance |
 | 6 | Boosting: Gradient Boosting, XGBoost and CatBoost, learning rate vs number of trees, tree depth, early stopping, a 10-seed check |
 | 7 | Stacking and voting with five different base models (RF, GB, XGBoost, SVR, KNN) |
 | 8 | Hyperparameter tuning with RandomizedSearchCV and time-series cross-validation, with the reason for each parameter |
 | 9 | Hybrid model: ARIMA on the price history, plus a Random Forest that learns ARIMA's errors |
-| 10 | Final comparison of all 20 models: table, charts, results by test year (2025 vs 2026) and interpretation |
-| 11 | Re-train the final model on all weeks, save it with joblib, check that it reloads correctly; conclusion |
+| 10 | Final comparison of all 20 models: table, charts, results by test year (2025 vs 2026), the Lecture 5 bagging / boosting / stacking table, Random Forest vs XGBoost, and interpretation |
+| 11 | Re-train the final model on all weeks, save it with joblib, check that it reloads correctly; research note and conclusion |
 
 LightGBM is not used: it crashed the Python kernel on the Windows laptop used for this project, so CatBoost was used as the third boosting library (the brief allows LightGBM or CatBoost).
 
@@ -60,7 +60,7 @@ Models are ranked by **unseen RMSE**: one error over all 149 weeks the models ne
 | XGBoost | 91.8 | 89.0 | 68.7 | 0.34 |
 | CatBoost | 92.8 | 90.8 | 68.4 | 0.31 |
 | Stacking (RF+GB+XGB+SVR+KNN) | 95.5 | 91.5 | 68.0 | 0.30 |
-| Linear regression (Ridge) | 99.2 | 97.0 | 65.6 | 0.33 |
+| Linear regression | 99.4 | 97.2 | 65.6 | 0.33 |
 | ARIMA(1,1,1) alone | 104.9 | 101.5 | 75.0 | 0.11 |
 | Naive (no change) | 110.6 | 107.4 | 81.7 | 0.00 |
 | Decision tree | 129.9 | 120.1 | 90.2 | -0.03 |
@@ -107,6 +107,14 @@ The full table of all 20 models, with training times and overfitting gaps, is in
 - **Prices are compiled by Macro Lab** from the Central Bank's Daily Price Report; Macro Lab notes that its files are not an official publication of the Central Bank.
 - **Missing drivers:** fuel and transport costs, imports, festival demand and road closures are not in the data, so sudden jumps are often forecast a week late.
 
+## Research note: Random Forest vs gradient boosting, tabular vs image and text data
+
+**Tabular data** (like this project's prices and rainfall): tree ensembles are usually the strongest choice. They need no scaling, handle features in different units, find non-linear effects and interactions on their own, and work with small datasets. **Random Forest** trains independent trees in parallel, gives an OOB error and feature importance for free, and needs little tuning. **Gradient boosting** (Gradient Boosting, XGBoost, CatBoost) trains trees one after another and can be more accurate when there is a lot of signal, but it is more sensitive to its settings and can overfit noise. Both share one limitation: trees cannot predict values outside the range seen in training, which is why this project predicts the weekly change and adds ARIMA for the price history.
+
+**Image and text data:** the meaning is in the structure (neighbouring pixels form shapes; word order gives meaning). A tree looks at one input value at a time, so it cannot learn these patterns from raw pixels or raw text, and the number of inputs is very large. Convolutional networks and transformers are built for this and are the standard choice. Tree ensembles are still useful once images or text have been turned into a table of features, such as word counts (TF-IDF) or features from a pre-trained network.
+
+**In this project:** Random Forest (test RMSE Rs 87.8) and XGBoost (Rs 89.0) were effectively tied; Random Forest needed no tuning, while XGBoost needed a small learning rate, shallow trees and early stopping, and overfitted with its default settings (Rs 95.4).
+
 ## References
 
 - Breiman, L. (1996). Bagging predictors. *Machine Learning*, 24(2), 123-140.
@@ -119,6 +127,8 @@ The full table of all 20 models, with training times and overfitting gaps, is in
 - Zhang, G. P. (2003). Time series forecasting using a hybrid ARIMA and neural network model. *Neurocomputing*, 50, 159-175.
 - Smith, J., & Wallis, K. F. (2009). A simple explanation of the forecast combination puzzle. *Oxford Bulletin of Economics and Statistics*, 71(3), 331-355.
 - Hersbach, H., et al. (2020). The ERA5 global reanalysis. *Quarterly Journal of the Royal Meteorological Society*, 146(730), 1999-2049.
+- LeCun, Y., Bengio, Y., & Hinton, G. (2015). Deep learning. *Nature*, 521, 436-444.
+- Grinsztajn, L., Oyallon, E., & Varoquaux, G. (2022). Why do tree-based models still outperform deep learning on typical tabular data? *NeurIPS 2022 Datasets and Benchmarks Track*.
 
 ## How to run
 
@@ -176,7 +186,7 @@ The app only needs `app.py`, `pipeline.py`, `model/hybrid_rf_arima.joblib`, `dat
 - **Dataset search:** searched for Sri Lankan datasets suitable for the assignment and made a ranked comparison; I chose the CBSL / Macro Lab daily price data from that list.
 - **Code:** wrote most of the Python code in the notebook (Steps 1-11), `pipeline.py` and `app.py`, and test-ran the notebook and the app to find errors before I ran them.
 - **Explanations:** wrote the markdown explanations in the notebook, including the "why" for each choice and the "What this shows" notes, which were written from the outputs of my own runs.
-- **Debugging:** helped fix problems on my laptop, for example the LightGBM kernel crash, the exact collinearity that broke plain linear regression (solved with Ridge), and the Streamlit / numpy version conflict.
+- **Debugging:** helped fix problems on my laptop, for example the LightGBM kernel crash, the exact collinearity that broke linear regression (solved by leaving the duplicated feature `gap_ma4` out of that model), and the Streamlit / numpy version conflict.
 - **Documentation:** drafted this README.
 
 **What I did:**
