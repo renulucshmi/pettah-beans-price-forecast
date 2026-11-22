@@ -22,7 +22,7 @@ The wholesale price of beans at Pettah swings sharply from week to week (weekly 
 | Daily wholesale food prices, Aug 2016 to Nov 2026 (Pettah beans, Dambulla beans, Pettah carrot, Pettah cabbage) | **Central Bank of Sri Lanka, Daily Price Report**, compiled by Macro Lab: https://macrolab.lk/data/prices-and-inflation/daily-prices/ | `dataset/daily-prices-d.csv` |
 | Daily rainfall for Nuwara Eliya (6.95° N, 80.79° E) and Badulla (6.99° N, 81.06° E) | **Open-Meteo Historical Weather API** (ERA5 reanalysis): https://open-meteo.com/ (downloaded by the notebook in Step 2) | `dataset/rain_daily.csv` |
 
-The daily prices are averaged into **537 weeks** (weeks ending on Friday). 10 weeks with no reported trading days (1.9%) were filled by time interpolation and flagged in the `was_missing` column.
+The daily prices are averaged into **537 weeks** (weeks ending on Friday). 10 weeks with no reported trading days (1.9%) were filled by time interpolation and flagged in the `was_missing` column. Nine are in 2020 (training); one, 17 April 2026, is in the test period and affects 6 of the 97 test predictions (its own price and the lag features of the next five weeks). Leaving those 6 weeks out changes each model's test RMSE by about Rs 1 and does not change the ranking. The filled values use the price of the week after each gap, so this is not completely free of leakage; this is documented as a limitation, not resolved.
 
 Files created by the notebook: `dataset/weekly_clean.csv`, `dataset/weekly_with_rain.csv`, `dataset/features.csv`, and the result tables in `results/`.
 
@@ -48,7 +48,7 @@ Three boosting libraries are compared with the same settings: XGBoost (the main 
 
 ## Results
 
-Models are ranked by **unseen RMSE**: one error over all 149 weeks the models never trained on (2024 validation + 2025-26 test). RMSE and MAE are in Rs/kg; R² is for the weekly change.
+Models are ranked by **unseen RMSE**: one error over all 149 weeks the models never trained on (2024 validation + 2025-26 test). This ranking was also used to pick the final model, so the test weeks influenced that choice (see Limitations). RMSE and MAE are in Rs/kg; R² is for the weekly change.
 
 | Model | Unseen RMSE | Test RMSE | Test MAE | Test R² |
 |---|---|---|---|---|
@@ -100,7 +100,9 @@ The full table of all 18 models, with training times and overfitting gaps, is in
 
 ## Limitations
 
-- **The final model was chosen using the test weeks too.** The ranking uses validation and test together (Step 10) to avoid relying on one year, so the hybrid's test score is slightly optimistic. CatBoost is only about Rs 0.4 behind the hybrid on unseen RMSE (and its validation error was still falling slowly at its 600-tree limit), so the top of the ranking is not certain.
+These limitations are **documented, not resolved**: nothing below was changed to fix them; each is stated (and measured where possible) so the results can be read with it in mind.
+
+- **The final model was chosen using the test weeks too.** Lecture 4's rule is to choose on validation and evaluate on test. Each model's settings were chosen without the test weeks, but the final model was picked by unseen RMSE (validation + test), because 2024 alone would have picked default XGBoost, which memorised the training weeks. On 2024 alone the hybrid is third (Rs 94.1, behind default XGBoost Rs 91.1 and CatBoost Rs 93.0). So the hybrid's test score is potentially optimistic, and CatBoost (about Rs 0.4 behind on unseen RMSE) would be an equally reasonable choice. The hybrid is kept as the brief's RF + ARIMA hybrid.
 - **Stacking uses `KFold`, not a walk-forward split.** For some training weeks, the base models that produced the meta-model's training predictions had seen later weeks. The final test is still strictly on 2025-26.
 - **One test period** (2025 to Nov 2026) and no statistical significance test of the differences between models.
 - **Rainfall is from a reanalysis grid** (ERA5 via Open-Meteo), not from weather-station readings in the growing areas.
