@@ -199,7 +199,7 @@ with tab_models:
                 tooltip=["model", alt.Tooltip("train_time_s:Q", format=".2f", title="seconds")],
             ).properties(height=max(200, 32 * len(timed))),
             width="stretch")
-        st.caption("Times vary by a second or two between runs; the naive guesses need no training.")
+        st.caption("Times vary between runs; the naive guess needs no training.")
 
     st.subheader("Actual vs predicted price on the test weeks (2025-26)")
     pick = st.multiselect("Models", [c for c in test_pred.columns if c != "actual"],
@@ -225,7 +225,7 @@ with tab_models:
     st.markdown(
         "**Key findings**\n"
         "- Every ensemble beats the naive guess; the single decision tree does not (it memorises the training weeks).\n"
-        "- Bagging and boosting reach almost the same accuracy; the difference is within random-seed variation.\n"
+        "- Random Forest (bagging) and XGBoost (boosting) reach almost the same accuracy, within about Rs 1.\n"
         "- Voting beat stacking: the tree models make very similar predictions, so learned weights mostly fit noise.\n"
         "- The RF + ARIMA hybrid is best: ARIMA uses only past prices, and the forest adds rain and the other "
         "market, which ARIMA cannot see.")
