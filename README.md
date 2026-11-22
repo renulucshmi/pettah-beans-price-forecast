@@ -32,17 +32,17 @@ All models are trained on **Sep 2016 to Dec 2023** (383 weeks), tuned on **2024*
 
 | Notebook step | What it does |
 |---|---|
-| 1 | Load the Macro Lab file, choose the columns, average into weeks, fill and flag missing weeks |
+| 1 | Load the Macro Lab file, choose the columns, average into weeks, fill and flag missing weeks, data checks (duplicates, impossible prices, week spacing) |
 | 2 | Download rainfall for the growing areas and check how rain lines up with price changes |
-| 3 | Build the target and the 20 features |
+| 3 | Build the target and the 20 features, with automatic checks against data leakage |
 | 4 | Baselines: naive "no change", seasonal naive, Ridge linear regression, a single decision tree |
 | 5 | Bagging: BaggingRegressor and Random Forest with out-of-bag (OOB) scores and feature importance |
 | 6 | Boosting: Gradient Boosting, XGBoost and CatBoost, learning rate vs number of trees, tree depth, early stopping, a 10-seed check |
 | 7 | Stacking and voting with five different base models (RF, GB, XGBoost, SVR, KNN) |
 | 8 | Hyperparameter tuning with RandomizedSearchCV and time-series cross-validation, with the reason for each parameter |
 | 9 | Hybrid model: ARIMA on the price history, plus a Random Forest that learns ARIMA's errors |
-| 10 | Final comparison of all 20 models: table, charts and interpretation |
-| 11 | Re-train the final model on all weeks, save it with joblib, check that it reloads correctly |
+| 10 | Final comparison of all 20 models: table, charts, results by test year (2025 vs 2026) and interpretation |
+| 11 | Re-train the final model on all weeks, save it with joblib, check that it reloads correctly; conclusion |
 
 LightGBM is not used: it crashed the Python kernel on the Windows laptop used for this project, so CatBoost was used as the third boosting library (the brief allows LightGBM or CatBoost).
 
@@ -91,7 +91,7 @@ The full table of all 20 models, with training times and overfitting gaps, is in
 
 | Check | How it is handled |
 |---|---|
-| No future information in the features | Every feature uses only the current week and earlier weeks; the calendar features use next week's date, which is known in advance. |
+| No future information in the features | Every feature uses only the current week and earlier weeks; the calendar features use next week's date, which is known in advance. Step 3 asserts that the target is exactly next week's change, that no next-week column is an input, and that train, validation and test do not overlap. |
 | Time-based split | Train ≤ 2023 < validation 2024 < test 2025-26; no shuffling anywhere. |
 | Settings chosen without the test set | Learning rate, tree depth, early stopping, SVR/KNN settings and the stacking setup were chosen on the training data or the 2024 validation year. |
 | ARIMA does not look ahead | Its parameters are learned on 2016-2023 and frozen; every later forecast uses only the weeks before it. |
@@ -142,11 +142,11 @@ streamlit run app.py
 
 It opens at http://localhost:8501 and has four tabs:
 1. **Data overview:** latest prices, weekly Pettah and Dambulla prices, rainfall in the growing areas, the data sources.
-2. **Model comparison:** the table of all 20 models (filter by family) and charts of test error, training vs test error, and training time.
+2. **Model comparison:** the table of all 20 models (filter by family), charts of test error, training vs test error and training time, and actual vs predicted prices on the 2025-26 test weeks.
 3. **What drives the price:** feature importance of the final model.
 4. **Forecast:** next week's forecast (hybrid and ARIMA alone) with its typical error, and a "what if" form to change this week's prices and rainfall.
 
-The app only needs `app.py`, `pipeline.py`, `model/hybrid_rf_arima.joblib`, `dataset/weekly_with_rain.csv` and `results/results_final.csv`; it does not re-run the notebook.
+The app only needs `app.py`, `pipeline.py`, `model/hybrid_rf_arima.joblib`, `dataset/weekly_with_rain.csv`, `results/results_final.csv` and `results/test_predictions.csv`; it does not re-run the notebook.
 
 ## Project structure
 
@@ -164,7 +164,8 @@ The app only needs `app.py`, `pipeline.py`, `model/hybrid_rf_arima.joblib`, `dat
 │   ├── weekly_clean.csv        weekly prices after cleaning
 │   ├── weekly_with_rain.csv    weekly prices + weekly rainfall
 │   └── features.csv            target and the 20 features
-└── results/                    result tables for each step and the final comparison
+└── results/                    result tables for each step, the final comparison (results_final.csv)
+                                and the test-period predictions (test_predictions.csv)
 ```
 
 ## AI tools used

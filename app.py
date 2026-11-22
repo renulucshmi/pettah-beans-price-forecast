@@ -46,6 +46,11 @@ def load_results():
     return pd.read_csv(BASE / "results" / "results_final.csv", index_col="model")
 
 
+@st.cache_data
+def load_test_predictions():
+    return pd.read_csv(BASE / "results" / "test_predictions.csv", index_col="week", parse_dates=True)
+
+
 @st.cache_resource
 def load_model():
     return joblib.load(BASE / "model" / "hybrid_rf_arima.joblib")
@@ -53,6 +58,7 @@ def load_model():
 
 weekly = load_weekly()
 results = load_results()
+test_pred = load_test_predictions()
 bundle = load_model()
 scores = bundle["test_scores"]
 
@@ -194,6 +200,27 @@ with tab_models:
             ).properties(height=max(200, 32 * len(timed))),
             width="stretch")
         st.caption("Times vary by a second or two between runs; the naive guesses need no training.")
+
+    st.subheader("Actual vs predicted price on the test weeks (2025-26)")
+    pick = st.multiselect("Models", [c for c in test_pred.columns if c != "actual"],
+                          default=["Hybrid: RF + ARIMA", "Naive (no change)"])
+    shown_pred = test_pred[["actual"] + pick].rename(columns={"actual": "Actual price"})
+    long_pred = shown_pred.reset_index().melt("week", var_name="Series", value_name="Rs/kg")
+    series = ["Actual price"] + pick
+    palette = ["#222222", FORECAST, DAMBULLA, PETTAH, "#eda100", "#e87ba4", "#1baf7a"]
+    st.altair_chart(
+        alt.Chart(long_pred).mark_line(strokeWidth=2).encode(
+            x=alt.X("week:T", title=None, axis=alt.Axis(format="%b %Y")),
+            y=alt.Y("Rs/kg:Q", title="Rs per kg"),
+            color=alt.Color("Series:N", sort=series,
+                            scale=alt.Scale(domain=series, range=palette[:len(series)]),
+                            legend=alt.Legend(orient="top", title=None)),
+            strokeDash=alt.condition(alt.datum.Series == "Actual price", alt.value([1, 0]), alt.value([5, 3])),
+            tooltip=[alt.Tooltip("week:T", title="Week ending"), "Series:N", alt.Tooltip("Rs/kg:Q", format=",.0f")],
+        ).properties(height=340),
+        width="stretch")
+    st.caption("Each forecast was made one week earlier, using only data up to that week. "
+               "The naive guess is simply last week's price, so it is always one week late.")
 
     st.markdown(
         "**Key findings**\n"
