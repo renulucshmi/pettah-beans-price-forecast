@@ -39,7 +39,7 @@ All models are trained on **Sep 2016 to Dec 2023** (383 weeks), tuned on **2024*
 | 5 | Bagging: BaggingRegressor and Random Forest with out-of-bag (OOB) scores and feature importance |
 | 6 | Boosting: XGBoost, scikit-learn Gradient Boosting and CatBoost; learning rate vs number of trees, tree depth, number of trees chosen on validation, default vs configured settings |
 | 7 | Stacking and voting with four different base models (Random Forest, XGBoost, SVR, KNN) |
-| 8 | Hyperparameter tuning with RandomizedSearchCV and time-series cross-validation, with the reason for each parameter |
+| 8 | Hyperparameter tuning with GridSearchCV and time-series cross-validation, with the reason for each parameter |
 | 9 | Hybrid model: ARIMA on the price history, plus a Random Forest that learns ARIMA's errors |
 | 10 | Final comparison of all 18 models: table, charts, results by test year (2025 vs 2026), the Lecture 5 bagging / boosting / stacking table, Random Forest vs XGBoost, and interpretation |
 | 11 | Re-train the final model on all weeks, save it with joblib, check that it reloads correctly; research note and conclusion |
