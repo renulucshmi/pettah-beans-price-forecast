@@ -14,5 +14,6 @@ altair>=5,<7
 
 # Notebook only
 xgboost==3.2.0
+catboost==1.2.10
 matplotlib==3.7.2
 requests

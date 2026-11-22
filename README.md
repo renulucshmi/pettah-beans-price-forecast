@@ -37,14 +37,14 @@ All models are trained on **Sep 2016 to Dec 2023** (383 weeks), tuned on **2024*
 | 3 | Build the target and the 20 features, with automatic checks against data leakage |
 | 4 | Baselines: naive "no change", multiple linear regression, a single decision tree |
 | 5 | Bagging: BaggingRegressor and Random Forest with out-of-bag (OOB) scores and feature importance |
-| 6 | Boosting with XGBoost: learning rate vs number of trees, tree depth, number of trees chosen on validation, default vs configured settings |
+| 6 | Boosting: XGBoost, scikit-learn Gradient Boosting and CatBoost; learning rate vs number of trees, tree depth, number of trees chosen on validation, default vs configured settings |
 | 7 | Stacking and voting with four different base models (Random Forest, XGBoost, SVR, KNN) |
 | 8 | Hyperparameter tuning with RandomizedSearchCV and time-series cross-validation, with the reason for each parameter |
 | 9 | Hybrid model: ARIMA on the price history, plus a Random Forest that learns ARIMA's errors |
-| 10 | Final comparison of all 16 models: table, charts, results by test year (2025 vs 2026), the Lecture 5 bagging / boosting / stacking table, Random Forest vs XGBoost, and interpretation |
+| 10 | Final comparison of all 18 models: table, charts, results by test year (2025 vs 2026), the Lecture 5 bagging / boosting / stacking table, Random Forest vs XGBoost, and interpretation |
 | 11 | Re-train the final model on all weeks, save it with joblib, check that it reloads correctly; research note and conclusion |
 
-XGBoost is the boosting library used throughout, because it is the gradient-boosting method covered in the lectures and the brief asks for Random Forest to be compared with XGBoost. LightGBM was also tried, but it crashed the Python kernel on the Windows laptop used for this project.
+Three boosting libraries are compared with the same settings: XGBoost (the main one, covered in the lectures, and named in the brief's "Random Forest vs XGBoost"), scikit-learn's Gradient Boosting and CatBoost. The brief asks for LightGBM or CatBoost; LightGBM was also tried, but it crashed the Python kernel on the Windows laptop used for this project, so CatBoost is used.
 
 ## Results
 
@@ -53,6 +53,8 @@ Models are ranked by **unseen RMSE**: one error over all 149 weeks the models ne
 | Model | Unseen RMSE | Test RMSE | Test MAE | Test R² |
 |---|---|---|---|---|
 | **Hybrid: RF + ARIMA (final model)** | **87.6** | **83.9** | **65.7** | **0.36** |
+| CatBoost | 88.0 | 85.2 | 64.6 | 0.35 |
+| Gradient Boosting | 89.6 | 85.6 | 67.4 | 0.35 |
 | Random Forest | 90.4 | 87.8 | 69.8 | 0.32 |
 | Bagging (300 trees) | 90.7 | 87.6 | 69.7 | 0.32 |
 | Voting (RF+XGB+SVR+KNN) | 90.8 | 87.3 | 65.8 | 0.33 |
@@ -63,10 +65,10 @@ Models are ranked by **unseen RMSE**: one error over all 149 weeks the models ne
 | Naive (no change) | 110.6 | 107.4 | 81.7 | 0.00 |
 | Decision tree | 129.9 | 120.1 | 90.2 | -0.03 |
 
-The full table of all 16 models, with training times and overfitting gaps, is in `results/results_final.csv`.
+The full table of all 18 models, with training times and overfitting gaps, is in `results/results_final.csv`.
 
 **Main findings**
-- **Bagging fixed the single tree's overfitting** (test RMSE Rs 120 → Rs 88). **Boosting reached a similar level** (XGBoost Rs 88.4, within about Rs 1). Weekly prices are mostly noise, so reducing variance (bagging) matters more than reducing bias (boosting).
+- **Bagging fixed the single tree's overfitting** (test RMSE Rs 120 → Rs 88). **Boosting reached a similar or slightly better level** (CatBoost Rs 85.2, Gradient Boosting Rs 85.6, XGBoost Rs 88.4); Random Forest vs XGBoost, the pair the brief names, is effectively a tie (Rs 87.8 vs 88.4). Weekly prices are mostly noise, so reducing variance (bagging) matters more than reducing bias (boosting).
 - **The OOB score was too pessimistic** (OOB R² about 0.04 vs test R² 0.32), because the rain-price relationship is stronger after 2022 than in earlier years.
 - **Rain in Nuwara Eliya this week** is the strongest predictor in every model.
 - **Voting beat stacking**: Random Forest and XGBoost make almost the same predictions (correlation 0.93), so learning weights mostly fitted noise.
@@ -83,7 +85,7 @@ The full table of all 16 models, with training times and overfitting gaps, is in
 | How predictions are combined | plain average | weighted sum of all trees | weights learned by the meta-model | plain average | ARIMA forecast + forest correction |
 | Mainly reduces | variance (overfitting) | bias (underfitting) | both, if the base models make different errors | variance | errors that one model type cannot see |
 | Main risk here | cannot predict outside past values (handled by predicting the change) | overfits with a large learning rate or deep trees (default XGBoost) | the meta-model overfits noisy, older data | none specific; can be slightly worse than the best single model | more parts to save and keep consistent |
-| Result (test RMSE) | Rs 87.6-87.8 | Rs 88.4 (XGBoost) | Rs 91.6 | Rs 87.3 | **Rs 83.9** |
+| Result (test RMSE) | Rs 87.6-87.8 | Rs 85.2-88.4 (CatBoost, Gradient Boosting, XGBoost) | Rs 91.6 | Rs 87.3 | **Rs 83.9** |
 
 ## Methodology checks
 
@@ -98,7 +100,7 @@ The full table of all 16 models, with training times and overfitting gaps, is in
 
 ## Limitations
 
-- **The final model was chosen using the test weeks too.** The ranking uses validation and test together (Step 10) to avoid relying on one year, so the hybrid's test score is slightly optimistic. The models ranked 2nd to 5th are within about Rs 1 of each other, so their exact order is not certain.
+- **The final model was chosen using the test weeks too.** The ranking uses validation and test together (Step 10) to avoid relying on one year, so the hybrid's test score is slightly optimistic. CatBoost is only about Rs 0.4 behind the hybrid on unseen RMSE (and its validation error was still falling slowly at its 600-tree limit), so the top of the ranking is not certain.
 - **Stacking uses `KFold`, not a walk-forward split.** For some training weeks, the base models that produced the meta-model's training predictions had seen later weeks. The final test is still strictly on 2025-26.
 - **One test period** (2025 to Nov 2026) and no statistical significance test of the differences between models.
 - **Rainfall is from a reanalysis grid** (ERA5 via Open-Meteo), not from weather-station readings in the growing areas.
@@ -107,11 +109,11 @@ The full table of all 16 models, with training times and overfitting gaps, is in
 
 ## Research note: Random Forest vs gradient boosting, tabular vs image and text data
 
-**Tabular data** (like this project's prices and rainfall): tree ensembles are usually the strongest choice. They need no scaling, handle features in different units, find non-linear effects and interactions on their own, and work with small datasets. **Random Forest** trains independent trees in parallel, gives an OOB error and feature importance for free, and needs little tuning. **Gradient boosting** (here XGBoost) trains trees one after another and can be more accurate when there is a lot of signal, but it is more sensitive to its settings and can overfit noise. Both share one limitation: trees cannot predict values outside the range seen in training, which is why this project predicts the weekly change and adds ARIMA for the price history.
+**Tabular data** (like this project's prices and rainfall): tree ensembles are usually the strongest choice. They need no scaling, handle features in different units, find non-linear effects and interactions on their own, and work with small datasets. **Random Forest** trains independent trees in parallel, gives an OOB error and feature importance for free, and needs little tuning. **Gradient boosting** (here XGBoost, Gradient Boosting and CatBoost) trains trees one after another and can be more accurate when there is a lot of signal, but it is more sensitive to its settings and can overfit noise. Both share one limitation: trees cannot predict values outside the range seen in training, which is why this project predicts the weekly change and adds ARIMA for the price history.
 
 **Image and text data:** the meaning is in the structure (neighbouring pixels form shapes; word order gives meaning). A tree looks at one input value at a time, so it cannot learn these patterns from raw pixels or raw text, and the number of inputs is very large. Convolutional networks and transformers are built for this and are the standard choice. Tree ensembles are still useful once images or text have been turned into a table of features, such as word counts (TF-IDF) or features from a pre-trained network.
 
-**In this project:** Random Forest (test RMSE Rs 87.8) and XGBoost (Rs 88.4) were effectively tied; Random Forest needed no tuning, while XGBoost needed a small learning rate, shallow trees and a carefully chosen number of trees, and overfitted with its default settings (Rs 95.4).
+**In this project:** Random Forest (test RMSE Rs 87.8) and XGBoost (Rs 88.4) were effectively tied, with CatBoost and Gradient Boosting slightly ahead (Rs 85.2-85.6); Random Forest needed no tuning, while XGBoost needed a small learning rate, shallow trees and a carefully chosen number of trees, and overfitted with its default settings (Rs 95.4).
 
 ## References
 
@@ -119,6 +121,7 @@ The full table of all 16 models, with training times and overfitting gaps, is in
 - Breiman, L. (2001). Random forests. *Machine Learning*, 45(1), 5-32.
 - Friedman, J. H. (2001). Greedy function approximation: a gradient boosting machine. *Annals of Statistics*, 29(5), 1189-1232.
 - Chen, T., & Guestrin, C. (2016). XGBoost: a scalable tree boosting system. *Proceedings of KDD 2016*, 785-794.
+- Prokhorenkova, L., et al. (2018). CatBoost: unbiased boosting with categorical features. *Advances in Neural Information Processing Systems 31*.
 - Wolpert, D. H. (1992). Stacked generalization. *Neural Networks*, 5(2), 241-259.
 - Box, G. E. P., & Jenkins, G. M. (1970). *Time Series Analysis: Forecasting and Control*. Holden-Day.
 - Zhang, G. P. (2003). Time series forecasting using a hybrid ARIMA and neural network model. *Neurocomputing*, 50, 159-175.
@@ -149,7 +152,7 @@ streamlit run app.py
 
 It opens at http://localhost:8501 and has four tabs:
 1. **Data overview:** latest prices, weekly Pettah and Dambulla prices, rainfall in the growing areas, the data sources.
-2. **Model comparison:** the table of all 16 models (filter by family), charts of test error, training vs test error and training time, and actual vs predicted prices on the 2025-26 test weeks.
+2. **Model comparison:** the table of all 18 models (filter by family), charts of test error, training vs test error and training time, and actual vs predicted prices on the 2025-26 test weeks.
 3. **What drives the price:** feature importance of the final model.
 4. **Forecast:** next week's forecast (hybrid and ARIMA alone) with its typical error, and a "what if" form to change this week's prices and rainfall.
 
