@@ -1,19 +1,12 @@
-# Versions used to train and save the model (Python 3.11, Anaconda base environment).
-# The saved model must be loaded with the same scikit-learn version.
+# Packages for the Streamlit app (app.py). Streamlit Cloud installs this file.
+# Use Python 3.11: these are the versions the saved model was created with,
+# and the model must be loaded with the same scikit-learn version.
 pandas==2.0.3
 numpy==1.24.3
 scikit-learn==1.3.0
 statsmodels==0.14.0
 joblib==1.2.0
-
-# Streamlit dashboard (app.py)
 # 1.60 is pinned on purpose: Streamlit 1.66+ requires numpy>=1.25, and upgrading numpy
 # breaks the scikit-learn 1.3.0 / pandas 2.0.3 versions the model was saved with.
 streamlit==1.60.0
 altair>=5,<7
-
-# Notebook only
-xgboost==3.2.0
-catboost==1.2.10
-matplotlib==3.7.2
-requests

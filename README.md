@@ -135,7 +135,8 @@ The full table of all 18 models, with training times and overfitting gaps, is in
 The project was built with **Python 3.11** (Anaconda). The saved model must be loaded with the same scikit-learn version it was saved with (1.3.0), so the versions are pinned in `requirements.txt`.
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-notebook.txt   # notebook and app
+pip install -r requirements.txt            # app only (this is what Streamlit Cloud installs)
 ```
 
 **Streamlit version:** `requirements.txt` pins `streamlit==1.60.0` on purpose. Streamlit 1.66 and newer require numpy 1.25+, and upgrading numpy breaks scikit-learn 1.3.0 and pandas 2.0.3. On Windows, close VS Code / Jupyter before installing, so no running kernel locks the package files.
@@ -164,7 +165,8 @@ The app only needs `app.py`, `pipeline.py`, `model/hybrid_rf_arima.joblib`, `dat
 ├── ensemble_assignment.ipynb   analysis notebook (Steps 1-11, with explanations)
 ├── app.py                      Streamlit dashboard
 ├── pipeline.py                 feature building + forecast function, shared by the notebook and the app
-├── requirements.txt            library versions
+├── requirements.txt            library versions for the app
+├── requirements-notebook.txt   extra libraries for the notebook
 ├── .streamlit/config.toml      light theme for the dashboard
 ├── model/
 │   └── hybrid_rf_arima.joblib  saved final model (Random Forest + ARIMA)
